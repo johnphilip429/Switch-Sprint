@@ -2,8 +2,11 @@ import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Dock } from './Dock';
 import { format } from 'date-fns';
+import { useAppStore } from '../../context/AppContext';
+import { CloudOff, RefreshCw, CheckCircle2 } from 'lucide-react';
 
 export const AppLayout: React.FC = () => {
+    const { backupStatus, connectBackupFolder, backupFolderName } = useAppStore();
     const [currentTime, setCurrentTime] = useState(new Date());
 
     React.useEffect(() => {
@@ -21,6 +24,22 @@ export const AppLayout: React.FC = () => {
                 <div className="flex items-center gap-4">
                     <span>🍎</span>
                     <span className="font-bold">SwitchSprint</span>
+
+                    <div className="h-4 w-[1px] bg-white/20 mx-1"></div>
+
+                    {/* Backup Status / Action */}
+                    <button
+                        onClick={connectBackupFolder}
+                        className={`flex items-center gap-2 px-2 py-0.5 rounded transition-colors hover:bg-white/10 ${backupStatus === 'connected' ? 'text-green-400' : 'text-orange-300'}`}
+                        title={backupStatus === 'connected' ? `Connected to: ${backupFolderName}` : 'Connect your local folder to load your data'}
+                    >
+                        {backupStatus === 'disconnected' && <CloudOff size={12} />}
+                        {backupStatus === 'connected' && <CheckCircle2 size={12} />}
+                        {backupStatus === 'saving' && <RefreshCw size={12} className="animate-spin" />}
+                        <span className="hidden sm:inline">
+                            {backupStatus === 'connected' ? (backupFolderName || 'Connected') : 'Connect Database'}
+                        </span>
+                    </button>
                 </div>
                 <div className="flex items-center gap-3 opacity-80">
                     <span>{format(currentTime, 'EEE MMM d h:mm aa')}</span>
