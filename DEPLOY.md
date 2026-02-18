@@ -11,7 +11,27 @@ Since this is a static React application, you can deploy it for free on many pla
 3.  Drag and drop the `dist` folder onto the page.
 4.  That's it! Netlify will give you a live URL.
 
-## Option 2: Vercel (Recommended for updates)
+## Option 1: Continuous Deployment via GitHub (Most Recommended)
+
+This is the professional way. Every time you `git push`, Vercel will update your site automatically.
+
+1.  **Create a Repo**: Go to [GitHub.com/new](https://github.com/new) and create a repository named `switch-sprint`.
+2.  **Push your code**:
+    ```bash
+    git remote add origin https://github.com/YOUR_USERNAME/switch-sprint.git
+    git branch -M main
+    git push -u origin main
+    ```
+3.  **Connect to Vercel**:
+    *   Go to [vercel.com/new](https://vercel.com/new).
+    *   Click **"Continue with GitHub"**.
+    *   Find your `switch-sprint` repo and click **"Import"**.
+    *   Click **"Deploy"**.
+4.  Done! Your live link will be generated.
+
+## Option 2: Deploy from Command Line (Manual)
+
+Good for quick tests without GitHub.
 
 1.  Install Vercel CLI:
     ```bash

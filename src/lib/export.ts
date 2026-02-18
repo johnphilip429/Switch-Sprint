@@ -83,3 +83,15 @@ export const saveToHandle = async (handle: any, content: string | Blob) => {
 export const getNewFileHandle = async (dirHandle: any, filename: string) => {
     return await dirHandle.getFileHandle(filename, { create: true });
 };
+
+export const readFromHandle = async (dirHandle: any, filename: string) => {
+    try {
+        const fileHandle = await dirHandle.getFileHandle(filename, { create: false });
+        const file = await fileHandle.getFile();
+        const text = await file.text();
+        return JSON.parse(text);
+    } catch (err) {
+        console.warn("File not found or unreadable:", filename);
+        return null;
+    }
+};

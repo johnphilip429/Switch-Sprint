@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { AppData, DailySession, JobApplication, StudyDay, ResourceCategory, ChecklistItem, Contact, ResumeVersion } from '../types';
 import { DEFAULT_CHECKLIST, DEFAULT_RESOURCES, STUDY_PLAN } from '../data/seed';
 import { format } from 'date-fns';
-import { saveToHandle, getNewFileHandle } from '../lib/export';
+import { saveToHandle, getNewFileHandle, readFromHandle } from '../lib/export';
 import { get, set } from 'idb-keyval';
 
 interface AppContextType {
@@ -212,6 +212,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             setBackupDirHandle(handle);
             setBackupStatus('connected');
             await set('backupDirHandle', handle); // Persist handle
+
+            // Attempt to load "Database"
+            const backupData = await readFromHandle(handle, 'switch-sprint-backup.json');
+            if (backupData) {
+                // Determine if we should overwrite. 
+                // Strategy: If local state is "empty" (just seed), overwrite.
+                // If local state has data, maybe prompt? 
+                // User said "this will be my database", so let's overwrite for now or merge safely.
+                // Simple overwrite for "Database" feel.
+
+                // Add missing fields from INITIAL_STATE to ensure compatibility if backup is old
+                const merged = { ...INITIAL_STATE, ...backupData };
+
+                setState(merged);
+
+                console.log("Database loaded from backup folder.");
+                setLastBackupTime(new Date()); // loaded "fresh"
+            }
+
+
         } catch (err) {
             console.error("Failed to connect folder:", err);
             // User likely cancelled
