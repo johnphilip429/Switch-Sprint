@@ -71,6 +71,8 @@ export const ApplicationModal: React.FC<ApplicationModalProps> = ({ isOpen, onCl
             recruiterName: formData.recruiterName,
             recruiterContact: formData.recruiterContact,
             followUpStatus: initialData?.followUpStatus || 'Pending',
+            salaryExpected: formData.salaryExpected,
+            salaryOffered: formData.salaryOffered,
         };
 
         onSubmit(app);
@@ -185,12 +187,34 @@ export const ApplicationModal: React.FC<ApplicationModalProps> = ({ isOpen, onCl
                         </div>
                     </div>
 
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Expected Salary</label>
+                            <input
+                                className="w-full p-2 border rounded-md dark:bg-slate-950 dark:border-slate-800"
+                                value={formData.salaryExpected || ''}
+                                onChange={e => setFormData({ ...formData, salaryExpected: e.target.value })}
+                                placeholder="e.g. 12LPA"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Offered Salary</label>
+                            <input
+                                className="w-full p-2 border rounded-md dark:bg-slate-950 dark:border-slate-800"
+                                value={formData.salaryOffered || ''}
+                                onChange={e => setFormData({ ...formData, salaryOffered: e.target.value })}
+                                placeholder="e.g. 15LPA"
+                            />
+                        </div>
+                    </div>
+
                     <div>
-                        <label className="block text-sm font-medium mb-1">Notes</label>
+                        <label className="block text-sm font-medium mb-1">Notes / Interview Prep</label>
                         <textarea
-                            className="w-full p-2 border rounded-md dark:bg-slate-950 dark:border-slate-800 h-20"
-                            value={formData.notes}
+                            className="w-full p-2 border rounded-md dark:bg-slate-950 dark:border-slate-800 h-24"
+                            value={formData.notes || ''}
                             onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                            placeholder="Key skills, questions to ask, interview feedback..."
                         />
                     </div>
 

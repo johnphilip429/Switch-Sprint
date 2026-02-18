@@ -2,7 +2,7 @@ import React from 'react';
 import { useAppStore } from '../context/AppContext';
 import { Card, Button, Badge } from '../components/ui';
 import { downloadFile } from '../lib/download';
-import { BookOpen, Code, Terminal, CheckCircle, Circle, Calendar, Download, Upload } from 'lucide-react';
+import { BookOpen, Code, Terminal, CheckCircle, Circle, Calendar, Download, Upload, Bell, Lock } from 'lucide-react';
 import { format, addDays, differenceInDays } from 'date-fns';
 import { cn } from '../lib/utils';
 import type { StudyDay } from '../types';
@@ -20,7 +20,11 @@ export const StudyPlan: React.FC = () => {
     const currentDayNum = startDate ? Math.max(1, differenceInDays(today, startDate) + 1) : 0;
 
     const toggleDayComplete = (day: StudyDay) => {
-        updateStudyDay(day.dayNumber, { completed: !day.completed });
+        const isCompleting = !day.completed;
+        updateStudyDay(day.dayNumber, {
+            completed: isCompleting,
+            completedDate: isCompleting ? format(new Date(), 'yyyy-MM-dd') : undefined
+        });
     };
 
     const handleExport = () => {
@@ -68,6 +72,22 @@ Day ${d.dayNumber}:
         reader.readAsText(file);
     };
 
+    const handleGoogleCalendarReminder = () => {
+        const title = encodeURIComponent("Switch Sprint: Daily Study Session");
+        const details = encodeURIComponent("Time to focus on your career switch! Check the Switch Sprint app.");
+        // Recurring daily at 9:30 PM (21:30)
+        // Format dates as YYYYMMDDTHHMMSSZ.
+        const start = new Date();
+        start.setHours(21, 30, 0, 0);
+        const end = new Date(start.getTime() + 60 * 60 * 1000); // 1 hour duration
+
+        const formatDate = (date: Date) => date.toISOString().replace(/-|:|\.\d\d\d/g, "");
+
+        const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&dates=${formatDate(start)}/${formatDate(end)}&recur=RRULE:FREQ=DAILY`;
+
+        window.open(url, '_blank');
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -90,13 +110,23 @@ Day ${d.dayNumber}:
                         <Download size={16} className="mr-2" /> Export Report
                     </Button>
                     {!startDate ? (
-                        <Button onClick={handleStartPlan} className="bg-indigo-600 hover:bg-indigo-700">
-                            <Calendar className="mr-2" size={18} /> Start Plan Today
-                        </Button>
+                        <div className="flex gap-2">
+                            <Button onClick={handleGoogleCalendarReminder} variant="outline" className="border-indigo-200 text-indigo-700 hover:bg-indigo-50">
+                                <Bell size={16} className="mr-2" /> Set 9:30 PM Reminder
+                            </Button>
+                            <Button onClick={handleStartPlan} className="bg-indigo-600 hover:bg-indigo-700">
+                                <Calendar className="mr-2" size={18} /> Start Plan Today
+                            </Button>
+                        </div>
                     ) : (
-                        <div className="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-4 py-2 rounded-lg">
-                            <Calendar size={18} />
-                            <span className="font-medium">Current: Day {Math.min(14, currentDayNum)}</span>
+                        <div className="flex gap-2">
+                            <Button onClick={handleGoogleCalendarReminder} variant="outline" className="border-indigo-200 text-indigo-700 hover:bg-indigo-50">
+                                <Bell size={16} className="mr-2" /> Daily Reminder
+                            </Button>
+                            <div className="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-4 py-2 rounded-lg">
+                                <Calendar size={18} />
+                                <span className="font-medium">Current: Day {Math.min(14, currentDayNum)}</span>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -106,7 +136,11 @@ Day ${d.dayNumber}:
                 {(Object.values(state.studyProgress) as StudyDay[]).map((day: StudyDay) => {
                     const isToday = day.dayNumber === currentDayNum;
                     const date = startDate ? addDays(startDate, day.dayNumber - 1) : null;
-                    const isLocked = startDate && day.dayNumber > currentDayNum; // Future days
+
+                    // Locking Logic: Locked if previous day is NOT completed (except Day 1)
+                    // const isLocked = startDate && day.dayNumber > currentDayNum; // OLD logic based on date
+                    const previousDay = state.studyProgress[day.dayNumber - 1];
+                    const isLocked = day.dayNumber > 1 && !previousDay?.completed;
 
                     return (
                         <Card
@@ -118,7 +152,14 @@ Day ${d.dayNumber}:
                                 isLocked && "opacity-60 grayscale-[0.5]"
                             )}
                         >
-                            <div className="flex flex-col md:flex-row gap-6">
+                            <div className="flex flex-col md:flex-row gap-6 relative">
+                                {isLocked && (
+                                    <div className="absolute inset-0 bg-white/50 dark:bg-slate-950/50 backdrop-blur-[1px] z-10 flex items-center justify-center rounded-lg">
+                                        <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-full shadow-lg">
+                                            <Lock className="text-slate-400" size={24} />
+                                        </div>
+                                    </div>
+                                )}
                                 <div className="flex-shrink-0 min-w-[120px]">
                                     <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Day {day.dayNumber}</h3>
                                     {date && <p className="text-sm text-slate-500">{format(date, 'MMM d, yyyy')}</p>}
@@ -209,7 +250,7 @@ Day ${d.dayNumber}:
                                     <Button
                                         variant={day.completed ? "outline" : "primary"}
                                         onClick={() => toggleDayComplete(day)}
-                                        disabled={!!startDate && day.dayNumber > currentDayNum}
+                                        disabled={isLocked}
                                     >
                                         {day.completed ? "Mark Incomplete" : "Mark Done"}
                                     </Button>

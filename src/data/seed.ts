@@ -51,5 +51,15 @@ export const DEFAULT_RESOURCES: ResourceCategory[] = [
             { id: 'spark1', title: 'Spark By Examples', url: 'https://sparkbyexamples.com/', checked: false },
             { id: 'spark2', title: 'Databricks Academy', url: 'https://www.databricks.com/learn/training/home', checked: false },
         ]
+    },
+    {
+        id: 'audio',
+        title: 'Audio Books & Podcasts',
+        links: [
+            { id: 'audio1', title: 'Python for Everyone (Audio Course)', url: 'https://www.youtube.com/watch?v=8DvywoWv6fI', checked: false },
+            { id: 'audio2', title: 'SQL Tutorial for Beginners (Full Course)', url: 'https://www.youtube.com/watch?v=HXV3zeQKqGY', checked: false },
+            { id: 'audio3', title: 'Data Engineering Podcast', url: 'https://www.dataengineeringpodcast.com/', checked: false },
+            { id: 'audio4', title: 'Databricks - The Data Team Podcast', url: 'https://www.databricks.com/resources/podcasts/data-team', checked: false },
+        ]
     }
 ];

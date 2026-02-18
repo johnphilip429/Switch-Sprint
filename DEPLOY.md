@@ -21,6 +21,8 @@ Since this is a static React application, you can deploy it for free on many pla
     ```bash
     vercel
     ```
+    *Note: A `vercel.json` configuration file is already included to handle routing correctly.*
+
 3.  Follow the prompts (hit Enter for defaults).
     -   Set up and deploy? [Y]
     -   Which scope? [Select your account]

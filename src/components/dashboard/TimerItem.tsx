@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { Play, Pause, CheckCircle } from 'lucide-react';
 import { Button } from '../ui';
 import { cn } from '../../lib/utils';
 import type { ChecklistItem } from '../../types';
+
+import { useAppStore } from '../../context/AppContext';
 
 interface TimerItemProps {
     item: ChecklistItem;
@@ -11,34 +13,21 @@ interface TimerItemProps {
 }
 
 export const TimerItem: React.FC<TimerItemProps> = ({ item, onUpdate, sessionRunning }) => {
-    const [isRunning, setIsRunning] = useState(false);
-    const intervalRef = useRef<number | null>(null);
+    const { activeTimerId, toggleTimer } = useAppStore();
+    const isRunning = activeTimerId === item.id;
 
-    useEffect(() => {
-        if (isRunning && sessionRunning) {
-            intervalRef.current = window.setInterval(() => {
-                onUpdate(item.id, { timeSpentSeconds: item.timeSpentSeconds + 1 });
-            }, 1000);
-        } else {
-            if (intervalRef.current) {
-                clearInterval(intervalRef.current);
-                intervalRef.current = null;
-            }
-        }
-        return () => {
-            if (intervalRef.current) clearInterval(intervalRef.current);
-        };
-    }, [isRunning, sessionRunning, item.id, item.timeSpentSeconds]);
 
-    const toggleTimer = () => {
-        if (!sessionRunning) return; // Can't time if session not started? Or maybe auto-start session?
-        // Requirement: "If session is running, user can time any item"
-        setIsRunning(!isRunning);
+
+
+    const handleToggleTimer = () => {
+        if (!sessionRunning) return;
+        toggleTimer(item.id);
     };
 
     const toggleComplete = () => {
         onUpdate(item.id, { completed: !item.completed });
-        if (isRunning) setIsRunning(false);
+
+        if (isRunning) toggleTimer(item.id);
     };
 
     const formatTime = (seconds: number) => {
@@ -83,11 +72,11 @@ export const TimerItem: React.FC<TimerItemProps> = ({ item, onUpdate, sessionRun
 
             <div className="mt-3 sm:mt-0 flex items-center gap-2">
                 {isRunning ? (
-                    <Button size="sm" variant="outline" onClick={toggleTimer} className="text-amber-600 border-amber-200 hover:bg-amber-50">
+                    <Button size="sm" variant="outline" onClick={handleToggleTimer} className="text-amber-600 border-amber-200 hover:bg-amber-50">
                         <Pause size={16} className="mr-1" /> Pause
                     </Button>
                 ) : (
-                    <Button size="sm" variant="outline" onClick={toggleTimer} disabled={!sessionRunning || item.completed}
+                    <Button size="sm" variant="outline" onClick={handleToggleTimer} disabled={!sessionRunning || item.completed}
                         className={cn(!sessionRunning && "opacity-50 cursor-not-allowed")}
                     >
                         <Play size={16} className="mr-1" /> Start

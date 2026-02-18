@@ -36,6 +36,8 @@ export type JobApplication = {
     recruiterName?: string;
     recruiterContact?: string;
     followUpStatus: 'Pending' | 'Done' | 'Stale';
+    salaryExpected?: string;
+    salaryOffered?: string;
 };
 
 export type StudyDay = {
@@ -45,6 +47,7 @@ export type StudyDay = {
     topicSpark: string;
     practiceTask: string;
     completed: boolean;
+    completedDate?: string; // ISO timestamp
     notes: string;
     customTopics?: string[];
 };
@@ -62,10 +65,36 @@ export type ResourceCategory = {
     links: ResourceLink[];
 };
 
+export type ContactStatus = 'New' | 'Contacted' | 'Responded' | 'Ghosted' | 'Meeting Set';
+
+export type Contact = {
+    id: string;
+    name: string;
+    role: string;
+    company: string;
+    link: string; // LinkedIn or other
+    status: ContactStatus;
+    lastContactDate: string | null;
+    notes: string;
+    email?: string;
+};
+
+export type ResumeVersion = {
+    id: string;
+    name: string; // e.g. "Data Analyst Resume v2"
+    fileUrl: string; // Could be local path or online link
+    type: 'PDF' | 'Word' | 'Google Doc';
+    lastUpdated: string;
+    notes: string;
+};
+
 export type AppData = {
     sessions: DailySession[];
     applications: JobApplication[];
+    contacts: Contact[];
+    resumes: ResumeVersion[];
     studyPlanStartDate: string | null;
+    focusedStudyDay: number; // Track which day of the plan the user is currently on (independent of calendar)
     studyProgress: Record<number, StudyDay>; // Keyed by dayNumber
     resources: ResourceCategory[];
 };

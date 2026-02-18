@@ -1,7 +1,7 @@
 {
   "name": "switch-sprint",
   "private": true,
-  "version": "0.0.0",
+  "version": "2.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,14 +12,18 @@
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.18",
+    "@types/file-saver": "^2.0.7",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "file-saver": "^2.0.5",
+    "idb-keyval": "^6.2.2",
     "lucide-react": "^0.564.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.13.0",
     "recharts": "^3.7.0",
-    "tailwind-merge": "^3.4.1"
+    "tailwind-merge": "^3.4.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
