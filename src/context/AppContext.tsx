@@ -216,19 +216,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             // Attempt to load "Database"
             const backupData = await readFromHandle(handle, 'switch-sprint-backup.json');
             if (backupData) {
-                // Determine if we should overwrite. 
-                // Strategy: If local state is "empty" (just seed), overwrite.
-                // If local state has data, maybe prompt? 
-                // User said "this will be my database", so let's overwrite for now or merge safely.
-                // Simple overwrite for "Database" feel.
-
-                // Add missing fields from INITIAL_STATE to ensure compatibility if backup is old
                 const merged = { ...INITIAL_STATE, ...backupData };
-
                 setState(merged);
-
-                console.log("Database loaded from backup folder.");
-                setLastBackupTime(new Date()); // loaded "fresh"
+                setLastBackupTime(new Date());
+                window.alert("✅ Database connected! Your jobs and sessions are loaded.");
+            } else {
+                window.alert("📁 Folder connected, but 'switch-sprint-backup.json' was not found.\n\nPlease make sure your backup file is named exactly 'switch-sprint-backup.json' and is inside the folder you just selected.");
             }
 
 
