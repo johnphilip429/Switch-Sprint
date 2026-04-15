@@ -47,8 +47,8 @@ export const AppLayout: React.FC = () => {
             </div>
 
             {/* Main Content Area (Desktop) */}
-            <main className="relative z-10 w-full h-[calc(100vh-32px)] p-4 md:p-8 flex flex-col items-center justify-center">
-                <div className="w-full max-w-[1600px] h-full pb-20 md:pb-24 transition-all duration-500 ease-in-out">
+            <main className="relative z-10 w-full h-[calc(100vh-32px)] overflow-y-auto p-4 md:p-8 flex flex-col items-center justify-start">
+                <div className="w-full max-w-[1600px] min-h-full pb-20 md:pb-24 transition-all duration-500 ease-in-out">
                     <Outlet />
                 </div>
             </main>

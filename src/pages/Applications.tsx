@@ -2,13 +2,16 @@ import React, { useState } from 'react';
 import { useAppStore } from '../context/AppContext';
 import { Button, Badge } from '../components/ui';
 import { ApplicationModal } from '../components/applications/ApplicationModal';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Download, Upload, Users, Code, FileText, X } from 'lucide-react';
+import { downloadFile } from '../lib/download';
 import type { JobApplication, ApplicationStatus } from '../types';
 
 export const Applications: React.FC = () => {
-    const { state, addApplication, updateApplication, deleteApplication } = useAppStore();
+    const { state, addApplication, updateApplication, deleteApplication, loadApplications } = useAppStore();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingApp, setEditingApp] = useState<JobApplication | null>(null);
+    const [dragPromptConfig, setDragPromptConfig] = useState<{ isOpen: boolean, appId: string | null }>({ isOpen: false, appId: null });
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     const handleAdd = (app: JobApplication) => {
         if (editingApp) {
@@ -41,6 +44,87 @@ export const Applications: React.FC = () => {
         }
     };
 
+    const handleExport = () => {
+        const data = JSON.stringify(state.applications, null, 2);
+        downloadFile(data, 'applications-backup.json', 'application/json');
+    };
+
+    const handleImportClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const content = event.target?.result as string;
+                const importedApps = JSON.parse(content);
+                if (Array.isArray(importedApps)) {
+                    loadApplications(importedApps);
+                    alert('Applications imported successfully!');
+                } else {
+                    alert('Invalid file format. Expected an array of applications.');
+                }
+            } catch (err) {
+                alert('Failed to parse file.');
+            }
+        };
+        reader.readAsText(file);
+        
+        // Reset the input value so the same file can be selected again
+        if (fileInputRef.current) {
+             fileInputRef.current.value = '';
+        }
+    };
+
+    const handleInterviewRoundSelect = (round: string) => {
+        if (dragPromptConfig.appId) {
+            const app = state.applications.find(a => a.id === dragPromptConfig.appId);
+            if (app) {
+               updateApplication(app.id, { status: round as ApplicationStatus });
+            }
+        }
+        setDragPromptConfig({ isOpen: false, appId: null });
+    };
+
+    const onDrop = (e: React.DragEvent, colId: string) => {
+        e.preventDefault();
+        const appId = e.dataTransfer.getData('appId');
+        if (!appId) return;
+
+        const app = state.applications.find(a => a.id === appId);
+        if (!app) return;
+
+        let newStatus = app.status;
+        let newNotes = app.notes;
+
+        if (colId === 'To Apply') {
+            newStatus = 'Applied';
+            if (!newNotes.includes('#todo')) {
+                newNotes = '#todo ' + newNotes;
+            }
+        } else if (colId === 'Applied') {
+            newStatus = 'Applied';
+            newNotes = newNotes.replace('#todo', '').trim();
+        } else if (colId === 'Interview') {
+            setDragPromptConfig({ isOpen: true, appId: appId });
+            return; // Cancel direct update, wait for modal
+        } else if (colId === 'Offer!') {
+            newStatus = 'Offer';
+        } else if (colId === 'Rejected') {
+            newStatus = 'Rejected';
+        }
+
+        if (app.status !== newStatus || app.notes !== newNotes) {
+            updateApplication(appId, { status: newStatus, notes: newNotes });
+        }
+    };
+
+
+
 
     // Custom Columns for the Canvas
     const CANVAS_COLUMNS = [
@@ -59,9 +143,24 @@ export const Applications: React.FC = () => {
                 <div className="font-bold text-slate-800 dark:text-slate-100 text-lg">
                     Career Canvas
                 </div>
-                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full hover:bg-white/20" onClick={openAddModal}>
-                    <Plus size={18} />
-                </Button>
+                <div className="flex gap-2">
+                    <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        onChange={handleFileChange} 
+                        className="hidden" 
+                        accept=".json"
+                    />
+                    <Button size="sm" variant="ghost" className="hover:bg-white/20" onClick={handleImportClick}>
+                        <Upload size={16} /> <span className="hidden sm:inline ml-2">Import</span>
+                    </Button>
+                    <Button size="sm" variant="ghost" className="hover:bg-white/20" onClick={handleExport}>
+                        <Download size={16} /> <span className="hidden sm:inline ml-2">Export</span>
+                    </Button>
+                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full hover:bg-white/20" onClick={openAddModal}>
+                        <Plus size={18} />
+                    </Button>
+                </div>
             </div>
 
             {/* Canvas Body */}
@@ -79,7 +178,21 @@ export const Applications: React.FC = () => {
                         });
 
                         return (
-                            <div key={col.id} className="flex-1 min-w-[200px] md:min-w-0 flex flex-col h-full bg-white/20 dark:bg-black/20 rounded-xl shadow-inner backdrop-blur-sm overflow-hidden border border-white/10 transition-all duration-300">
+                            <div 
+                                key={col.id} 
+                                className="flex-1 min-w-[200px] md:min-w-0 flex flex-col h-full bg-white/20 dark:bg-black/20 rounded-xl shadow-inner backdrop-blur-sm overflow-hidden border border-white/10 transition-all duration-300 relative"
+                                onDragOver={(e) => {
+                                    e.preventDefault();
+                                    e.currentTarget.classList.add('bg-white/30', 'dark:bg-white/10');
+                                }}
+                                onDragLeave={(e) => {
+                                    e.currentTarget.classList.remove('bg-white/30', 'dark:bg-white/10');
+                                }}
+                                onDrop={(e) => {
+                                    e.currentTarget.classList.remove('bg-white/30', 'dark:bg-white/10');
+                                    onDrop(e, col.id);
+                                }}
+                            >
                                 {/* Column Header */}
                                 <div className={`${col.headerColor} p-3 flex items-center justify-center gap-2 font-bold text-slate-800 dark:text-slate-200 border-b border-white/10 text-sm`}>
                                     {col.title}
@@ -91,8 +204,13 @@ export const Applications: React.FC = () => {
                                     {apps.map(app => (
                                         <div
                                             key={app.id}
+                                            draggable
+                                            onDragStart={(e) => {
+                                                e.dataTransfer.setData('appId', app.id);
+                                                e.dataTransfer.effectAllowed = 'move';
+                                            }}
                                             onClick={() => openEditModal(app)}
-                                            className="bg-white/80 dark:bg-slate-900/80 rounded-xl p-4 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer group relative border border-white/20"
+                                            className="bg-white/80 dark:bg-slate-900/80 rounded-xl p-4 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer group relative border border-white/20 cursor-grab active:cursor-grabbing"
                                         >
                                             <div className="flex items-start gap-3 mb-3">
                                                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shrink-0 shadow-sm">
@@ -144,6 +262,35 @@ export const Applications: React.FC = () => {
                 onSubmit={handleAdd}
                 initialData={editingApp}
             />
+
+            {/* Custom Interview Round Modal */}
+            {dragPromptConfig.isOpen && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-white/20 dark:border-white/10 zoom-in-95 animate-in duration-300">
+                        <div className="p-6 relative">
+                            <button onClick={() => setDragPromptConfig({ isOpen: false, appId: null })} className="absolute top-4 right-4 p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                                <X size={20} />
+                            </button>
+                            <h3 className="text-xl font-bold mb-2 text-slate-800 dark:text-slate-100">Select Interview Round</h3>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">Which stage is this application moving to?</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <button onClick={() => handleInterviewRoundSelect('HR Screen')} className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all hover:scale-105 hover:shadow-lg group">
+                                    <Users className="w-8 h-8 text-blue-500 mb-3 group-hover:scale-110 transition-transform duration-300" />
+                                    <span className="font-semibold text-sm text-slate-700 dark:text-slate-300">HR Screen</span>
+                                </button>
+                                <button onClick={() => handleInterviewRoundSelect('Tech Round')} className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all hover:scale-105 hover:shadow-lg group">
+                                    <Code className="w-8 h-8 text-indigo-500 mb-3 group-hover:scale-110 transition-transform duration-300" />
+                                    <span className="font-semibold text-sm text-slate-700 dark:text-slate-300">Tech Round</span>
+                                </button>
+                                <button onClick={() => handleInterviewRoundSelect('Assignment')} className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 hover:border-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-all hover:scale-105 hover:shadow-lg group">
+                                    <FileText className="w-8 h-8 text-violet-500 mb-3 group-hover:scale-110 transition-transform duration-300" />
+                                    <span className="font-semibold text-sm text-slate-700 dark:text-slate-300">Assignment</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

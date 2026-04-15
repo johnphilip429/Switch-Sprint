@@ -13,6 +13,7 @@ interface AppContextType {
     addApplication: (app: JobApplication) => void;
     updateApplication: (appId: string, updates: Partial<JobApplication>) => void;
     deleteApplication: (appId: string) => void;
+    loadApplications: (apps: JobApplication[]) => void;
     updateStudyDay: (dayNumber: number, updates: Partial<StudyDay>) => void;
     setStudyPlanStartDate: (date: string) => void;
     loadStudyPlan: (newPlan: StudyDay[]) => void;
@@ -20,6 +21,7 @@ interface AppContextType {
     activeSession: DailySession | null;
     todaySession: DailySession | null;
     advanceStudyDay: () => void;
+    resetStudyPlan: () => void;
 
     // Contacts
     addContact: (contact: Contact) => void;
@@ -350,6 +352,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }));
     };
 
+    const loadApplications = (importedApps: JobApplication[]) => {
+        setState(prev => {
+            const existingMap = new Map(prev.applications.map(app => [app.id, app]));
+            // Add or overwrite with imported
+            importedApps.forEach(app => {
+                existingMap.set(app.id, app);
+            });
+            return {
+                ...prev,
+                applications: Array.from(existingMap.values())
+            };
+        });
+    };
+
     const updateStudyDay = (dayNumber: number, updates: Partial<StudyDay>) => {
         setState(prev => {
             // 1. Update Study Progress
@@ -426,6 +442,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const activeSession = getTodaySession();
 
+    const resetStudyPlan = () => {
+        if (window.confirm("Are you sure you want to completely reset your 14-day study plan? This cannot be undone.")) {
+            setState(prev => ({
+                ...prev,
+                studyPlanStartDate: null,
+                studyProgress: STUDY_PLAN.reduce((acc, day) => ({ ...acc, [day.dayNumber]: day }), {}),
+                focusedStudyDay: 1
+            }));
+        }
+    };
+
     const advanceStudyDay = () => {
         setState(prev => {
             const nextDay = prev.focusedStudyDay + 1;
@@ -467,6 +494,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             addApplication,
             updateApplication,
             deleteApplication,
+            loadApplications,
             updateStudyDay,
             setStudyPlanStartDate,
             loadStudyPlan,
@@ -486,7 +514,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             toggleTimer,
             verifyBackupConnection,
             backupFolderName: backupDirHandle ? (backupDirHandle as any).name : null,
-            advanceStudyDay
+            advanceStudyDay,
+            resetStudyPlan
         }}>
             {children}
         </AppContext.Provider>

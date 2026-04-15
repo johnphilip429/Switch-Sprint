@@ -17,8 +17,8 @@ const DOCK_ITEMS = [
 
 export const Dock: React.FC = () => {
     return (
-        <div className="fixed bottom-4 md:bottom-6 left-1/2 transform -translate-x-1/2 z-50">
-            <div className="bg-white/20 dark:bg-black/40 backdrop-blur-2xl border border-white/20 px-4 py-3 rounded-2xl md:rounded-3xl shadow-2xl flex items-end gap-2 md:gap-4 transition-all duration-300 hover:scale-105">
+        <div className="fixed bottom-0 left-0 w-full h-24 z-50 flex items-end justify-center pb-4 md:pb-6 group">
+            <div className="bg-white/20 dark:bg-black/40 backdrop-blur-2xl border border-white/20 px-4 py-3 rounded-2xl md:rounded-3xl shadow-2xl flex items-end gap-2 md:gap-4 transition-all duration-500 hover:scale-105 transform translate-y-[120%] opacity-0 group-hover:translate-y-0 group-hover:opacity-100">
                 {DOCK_ITEMS.map((item) => (
                     <Tooltip key={item.path} content={item.label}>
                         <NavLink

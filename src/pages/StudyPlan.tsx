@@ -2,13 +2,13 @@ import React from 'react';
 import { useAppStore } from '../context/AppContext';
 import { Card, Button, Badge } from '../components/ui';
 import { downloadFile } from '../lib/download';
-import { BookOpen, Code, Terminal, CheckCircle, Circle, Calendar, Download, Upload, Bell, Lock } from 'lucide-react';
+import { BookOpen, Code, Terminal, CheckCircle, Circle, Calendar, Download, Upload, Bell, Lock, RefreshCw } from 'lucide-react';
 import { format, addDays, differenceInDays } from 'date-fns';
 import { cn } from '../lib/utils';
 import type { StudyDay } from '../types';
 
 export const StudyPlan: React.FC = () => {
-    const { state, setStudyPlanStartDate, updateStudyDay, loadStudyPlan } = useAppStore();
+    const { state, setStudyPlanStartDate, updateStudyDay, loadStudyPlan, resetStudyPlan } = useAppStore();
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     const handleStartPlan = () => {
@@ -119,7 +119,10 @@ Day ${d.dayNumber}:
                             </Button>
                         </div>
                     ) : (
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 items-center flex-wrap justify-end">
+                            <Button onClick={resetStudyPlan} variant="outline" className="border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
+                                <RefreshCw size={16} className="mr-2" /> Reset
+                            </Button>
                             <Button onClick={handleGoogleCalendarReminder} variant="outline" className="border-indigo-200 text-indigo-700 hover:bg-indigo-50">
                                 <Bell size={16} className="mr-2" /> Daily Reminder
                             </Button>
